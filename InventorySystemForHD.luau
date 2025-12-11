@@ -13,6 +13,14 @@ local ItemTemplate = ScrollingFrame.ItemTemplate
 local Inventory = {}
 Inventory.__index = Inventory
 
+Inventory.ItemData = {
+	Sword = {Weight = 5},
+	Potion = {Weight = 1},
+	Apple = {Weight = 1},
+	Gem = {Weight = 2},
+}
+
+
 function Inventory.new()
 	local self = setmetatable({}, Inventory)
 
@@ -20,6 +28,10 @@ function Inventory.new()
 	self.selected = nil -- just keeping a selected variable for things like selection states
 
 	return self
+end
+
+function Inventory:HasItem(itemName)
+	return self.items[itemName] ~= nil
 end
 
 function Inventory:AddItem(itemName, amount)
@@ -55,6 +67,19 @@ function Inventory:Clear()
 	self:RefreshUI()
 end
 
+function Inventory:GetWeight() -- overall just a debug for future purposes. calculates the "weight" of ur inventory based on the data at the top of the script
+	local total = 0
+	
+	for itemName, amount in self.items do
+		local data = self.ItemData[itemName]
+		if data then
+			total += data.Weight * amount
+		end
+	end
+	
+	return total
+end
+
 function Inventory:SelectItem(itemName)
 	self.selected = itemName
 	
@@ -73,7 +98,9 @@ function Inventory:RefreshUI()
 		
 		child:Destroy()
 	end
-
+	
+	print("Weight:", self:GetWeight())
+	
 	local layoutIndex = 0
 
 	for itemName, count in self.items do -- creating a slot for each item in the player's inventory
@@ -222,7 +249,7 @@ local function SpawnTestItem(name, position)
 	itemPart.CanCollide = true
 	itemPart.Parent = workspace
 	-- itemPart is just gonna be a base for the prompt dw abt it
-
+	
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ObjectText = name 
 	prompt.ActionText = "Pick up " .. name 
@@ -232,7 +259,9 @@ local function SpawnTestItem(name, position)
 	prompt.Parent = itemPart
 
 	prompt.Triggered:Connect(function()
-		playerInventory:AddItem(name, 1)
+		local randomAmount = math.random(1, 3)
+		
+		playerInventory:AddItem(name, randomAmount)
 	end)
 end
 
@@ -243,7 +272,6 @@ local function SpawnAllDemos()
 		"Sword", "Potion", "Gem", "Apple"
 	}
 
-	
 	for i, name in itemNames do
 		local offset = Vector3.new((i - 1) * spacing, 0, 0) -- simple formula to offset the item spawn position so its not always on the same coordinates. they're 6 studs apart due to teh spacing variable
 		SpawnTestItem(name, startPos + offset)
